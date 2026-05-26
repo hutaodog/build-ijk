@@ -7,67 +7,57 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Install NDK r21e
+        run: |
+          wget -q https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip -O /tmp/ndk.zip
+          sudo unzip -q /tmp/ndk.zip -d /opt/
+          echo "ANDROID_NDK=/opt/android-ndk-r21e" >> $GITHUB_ENV
+
       - name: Clone IJKPlayer
         run: |
-          git clone --depth 1 https://github.com/bilibili/ijkplayer.git source
+          git clone https://github.com/bilibili/ijkplayer.git source
           cd source
-          git checkout k0.8.8 || true
+          git checkout k0.8.8
 
       - name: Init submodules
         working-directory: source
-        run: |
-          bash init-android.sh
-          bash init-config.sh
+        run: bash init-android.sh
+
+      - name: Init config
+        working-directory: source
+        run: bash init-config.sh
 
       - name: Fix module.sh
         working-directory: source
-        run: |
-          echo '. "$FF_BUILD_ROOT/../../config/module-lite.sh"' > config/module.sh
-
-      - name: Set up NDK
-        uses: nttld/setup-ndk@v1
-        with:
-          ndk-version: r21e
+        run: echo '. "$FF_BUILD_ROOT/../../config/module-lite.sh"' > config/module.sh
 
       - name: Compile FFmpeg arm64
         working-directory: source/android/contrib
-        run: |
-          bash compile-ffmpeg.sh arm64
+        run: bash compile-ffmpeg.sh arm64
 
-      - name: Fix Application.mk
+      - name: Fix build scripts
         working-directory: source
         run: |
           find . -name "Application.mk" -exec sed -i 's/APP_STL := stlport_static/APP_STL := c++_static/g' {} \;
-          find . -name "Application.mk" -exec sed -i 's/APP_STL := system/APP_STL := c++_shared/g' {} \;
-
-      - name: Fix symlinks
-        working-directory: source/android/ijkplayer
-        run: |
-          for arch in ijkplayer-arm64 ijkplayer-armv7a; do
-            cd $arch/src/main/jni
-            if [ -f ijkmedia ]; then rm ijkmedia; ln -s ../../../../../ijkmedia ijkmedia; fi
-            if [ -f ffmpeg ]; then rm ffmpeg; ln -s ../../../../../android/contrib/build/ffmpeg-arm64/output ffmpeg; fi
-            cd ../../../../..
-          done
-
-      - name: Remove profiler dependency
-        working-directory: source
-        run: |
           find . -name "Android.mk" -exec sed -i 's/LOCAL_STATIC_LIBRARIES := android-ndk-profiler ijksoundtouch/LOCAL_STATIC_LIBRARIES := ijksoundtouch/g' {} \;
 
       - name: Compile IJKPlayer arm64
         working-directory: source/android/ijkplayer/ijkplayer-arm64/src/main/jni
         run: |
-          $ANDROID_NDK/ndk-build NDK_PROJECT_PATH=. NDK_APPLICATION_MK=Application.mk APP_BUILD_SCRIPT=Android.mk -j$(nproc)
+          $ANDROID_NDK/ndk-build \
+            NDK_PROJECT_PATH=. \
+            NDK_APPLICATION_MK=Application.mk \
+            APP_BUILD_SCRIPT=Android.mk \
+            -j$(nproc)
 
       - name: Collect outputs
         run: |
           mkdir -p output/libs/arm64-v8a
           mkdir -p output/java
-          cp source/android/ijkplayer/ijkplayer-arm64/src/main/libs/arm64-v8a/*.so output/libs/arm64-v8a/ 2>/dev/null || true
-          cp -r source/android/ijkplayer/ijkplayer-java/src/main/java output/java/ 2>/dev/null || true
+          cp source/android/ijkplayer/ijkplayer-arm64/src/main/libs/arm64-v8a/*.so output/libs/arm64-v8a/ || true
+          cp -r source/android/ijkplayer/ijkplayer-java/src/main/java/com output/java/ || true
 
-      - name: Upload AAR outputs
+      - name: Upload outputs
         uses: actions/upload-artifact@v4
         with:
           name: ijkplayer-arm64
