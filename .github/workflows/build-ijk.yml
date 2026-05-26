@@ -31,6 +31,22 @@ jobs:
         working-directory: source
         run: echo '. "$FF_BUILD_ROOT/../../config/module-lite.sh"' > config/module.sh
 
+      - name: Fix NDK version detection
+        working-directory: source
+        run: |
+          sed -i 's/11\*|12\*|13\*|14\*/11*|12*|13*|14*|15*|16*|17*|18*|19*|20*|21*|22*|23*|24*|25*|26*|27*/' android/contrib/tools/do-detect-env.sh
+
+      - name: Create NDK toolchain & gcc symlinks
+        working-directory: source/android/contrib
+        run: |
+          # First run creates the standalone toolchain (will fail at FFmpeg configure)
+          bash compile-ffmpeg.sh arm64 || true
+          # Create gcc -> clang symlinks so FFmpeg configure finds the compiler
+          TOOLCHAIN_BIN=build/ffmpeg-arm64/toolchain/bin
+          for exe in gcc g++ cc c++; do
+            cp "$TOOLCHAIN_BIN/aarch64-linux-android-clang" "$TOOLCHAIN_BIN/aarch64-linux-android-$exe" 2>/dev/null || true
+          done
+
       - name: Compile FFmpeg arm64
         working-directory: source/android/contrib
         run: bash compile-ffmpeg.sh arm64
