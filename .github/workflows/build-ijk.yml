@@ -96,14 +96,7 @@ jobs:
 
       - name: Compile FFmpeg arm64
         working-directory: source/android/contrib
-        run: |
-          bash compile-ffmpeg.sh arm64 || true
-          cd build/ffmpeg-arm64/toolchain/bin
-          for exe in gcc g++ cc c++; do
-            cp aarch64-linux-android-clang aarch64-linux-android-$exe
-          done
-          cd ../../..
-          bash compile-ffmpeg.sh arm64
+        run: bash compile-ffmpeg.sh arm64
 
       - name: Compile IJKPlayer arm64
         working-directory: source/android/ijkplayer/ijkplayer-arm64/src/main/jni
