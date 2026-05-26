@@ -95,7 +95,8 @@ jobs:
           sed -i 's|sh tools/do-compile-ffmpeg.sh|bash tools/do-compile-ffmpeg.sh|' android/contrib/compile-ffmpeg.sh
           # Fix: -std=c99 is C-only, don't apply to C++ files
           sed -i 's/-std=c99/-std=gnu99/' android/contrib/tools/do-compile-ffmpeg.sh
-          find android/ijkplayer -name "Android.mk" -exec sed -i 's/-std=c99/-std=gnu99/g' {} \;
+          # Fix: -std=c99 must be C-only, not applied to C++ files
+          find android/ijkplayer -name "Android.mk" -exec sed -i 's/LOCAL_CFLAGS += -std=c99/LOCAL_CONLYFLAGS += -std=c99/g' {} \;
 
       - name: Compile FFmpeg arm64
         working-directory: source/android/contrib
