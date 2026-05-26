@@ -39,8 +39,10 @@ jobs:
           find . -name "Application.mk" -exec sed -i 's/APP_STL := stlport_static/APP_STL := c++_static/g' {} \;
           # Remove profiler dependency
           find . -name "Android.mk" -exec sed -i 's/LOCAL_STATIC_LIBRARIES := android-ndk-profiler ijksoundtouch/LOCAL_STATIC_LIBRARIES := ijksoundtouch/g' {} \;
-          # Fix: use bash instead of sh to avoid segfault
+          # Fix: replace sh with bash in compile-ffmpeg.sh
           sed -i 's|sh tools/do-compile-ffmpeg.sh|bash tools/do-compile-ffmpeg.sh|' android/contrib/compile-ffmpeg.sh
+          # Add debug output to find segfault location
+          sed -i '2i set -x' android/contrib/tools/do-compile-ffmpeg.sh
 
       - name: Compile FFmpeg arm64
         working-directory: source/android/contrib
