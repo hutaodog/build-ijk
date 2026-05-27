@@ -97,8 +97,8 @@ jobs:
           sed -i 's/-std=c99/-std=gnu99/' android/contrib/tools/do-compile-ffmpeg.sh
           # Fix: -std=c99 must be C-only, not applied to C++ files
           sed -i 's/LOCAL_CFLAGS += -std=c99/LOCAL_CONLYFLAGS += -std=c99/' ijkmedia/ijkplayer/Android.mk
-          # Fix: remove unsupported -Wno-psabi flag
-          find . -name "Android.mk" -exec sed -i 's/-Wno-psabi//g' {} \;
+          # Fix: suppress unknown warning options (like -Wno-psabi from cpufeatures)
+          echo 'APP_CFLAGS += -Wno-unknown-warning-option' >> android/ijkplayer/ijkplayer-arm64/src/main/jni/Application.mk
 
       - name: Compile FFmpeg arm64
         working-directory: source/android/contrib
