@@ -97,9 +97,11 @@ jobs:
           sed -i 's/-std=c99/-std=gnu99/' android/contrib/tools/do-compile-ffmpeg.sh
           # Fix: -std=c99 must be C-only, not applied to C++ files
           sed -i 's/LOCAL_CFLAGS += -std=c99/LOCAL_CONLYFLAGS += -std=c99/' ijkmedia/ijkplayer/Android.mk
-          # Fix: stub out profiler functions (monstartup/moncleanup)
-          sed -i 's/monstartup(/\/\/monstartup(/g' ijkmedia/ijkplayer/android/ijkplayer_jni.c
-          sed -i 's/moncleanup(/\/\/moncleanup(/g' ijkmedia/ijkplayer/android/ijkplayer_jni.c
+          # Fix: remove profiler forward declarations and calls
+          sed -i '/^void monstartup/d' ijkmedia/ijkplayer/android/ijkplayer_jni.c
+          sed -i '/^void moncleanup/d' ijkmedia/ijkplayer/android/ijkplayer_jni.c
+          sed -i 's/    monstartup(c_lib_name);/    \/\/ monstartup(c_lib_name);/' ijkmedia/ijkplayer/android/ijkplayer_jni.c
+          sed -i 's/    moncleanup();/    \/\/ moncleanup();/' ijkmedia/ijkplayer/android/ijkplayer_jni.c
           # Fix: suppress unknown warning options (like -Wno-psabi from cpufeatures)
           echo 'APP_CFLAGS += -Wno-unknown-warning-option' >> android/ijkplayer/ijkplayer-arm64/src/main/jni/Application.mk
 
